@@ -6,7 +6,7 @@ import numpy as np
 from sklearn.base import BaseEstimator, ClusterMixin
 from scipy.spatial.distance import pdist, squareform
 
-import utils
+import baseframework.utils as utils
 
 
 def _density_peak_clustering(X: np.ndarray, weights: np.ndarray | None, metric: str, distance_threshold: float | None,
