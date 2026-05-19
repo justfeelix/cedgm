@@ -1,5 +1,5 @@
 """
-Main data structure for CEDGM (Gridcell)
+Spatial Indexing Layer
 """
 
 #TODO
