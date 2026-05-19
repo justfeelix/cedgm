@@ -11,7 +11,7 @@ from .graph import AdjacencyGraph
 
 #NOTE: change as you see fit :)
 class CEDGM(OnlinePhase_StreamClusterer):
-    def __init__(self, radius: float, min_threshold: float, decay: int, grid_granularity: int = 30):
+    def __init__(self, radius: float, min_threshold: float, decay: int, grid_granularity: int = 30, cell_size: float = 0.5):
         super().__init__()
 
         # CEDGM Parameters (di from the paper)
@@ -23,7 +23,7 @@ class CEDGM(OnlinePhase_StreamClusterer):
 
         # NOTE: the paper proposes to calculate the resolution (grid size), this requires knowing Vmin and Vmax values of the dataset which is not really realistic in a stream! 
         #so instead we can just pass the cell size as a hyperparamter
-        self.grid = GridSpace(cell_size=0.5)
+        self.grid = GridSpace(cell_size)
 
         #NOTE: the intersection multiplier is 1.5 in the paper, we can also make this a hyperparamtere as well when testing
         self.graph = AdjacencyGraph(intersection_multiplier=1.5)
@@ -75,8 +75,9 @@ class CEDGM(OnlinePhase_StreamClusterer):
         """
         TODO (Anton): 
         - apply decay to all CMCs and Outliers.
-        - if OMC weight < threshold_sparse -> delete OMC and remove from Grid.
-        - if CMC weight < 0 (or lower bound) -> delete CMC, remove from Grid, call self.graph.remove_node().
+        - if OMC weight < threshold_sparse -> delete OMC and remove from grid
+        - if CMC weight < 0 (or lower bound) -> delete CMC, remove from grid, call self.graph.remove_node()
+        - clusters have life now as well not just the weight
         
         TODO :
         - call self.graph.recompute_connected_components() to handle splits in the macro cluser
