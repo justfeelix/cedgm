@@ -39,32 +39,40 @@ class CEDGM(OnlinePhase_StreamClusterer):
         Process a single incoming point
         """
         event_log = []
+
+        # conceptual workflow should be: 
+        # 1. find grid index 
+        # 2. update/create micro-cluster 
+        # 3. update graph for affected CMCs only
+        # 4.  prune/decay 
+        # 5. recompute macro-clusters
         
         # 1. Spatial Mapping
         cell_idx = self.grid.get_cell_index(x)
-        neighbor_cells = self.grid.get_neighboring_cells(cell_idx)
+        neighboring_cells_ids = self.grid.get_neighboring_cells(cell_idx)
         
-        # 2. Fetch Candidates
+        # fetch candidates
         candidate_cmc_ids = set()
         candidate_omc_ids = set()
-        for c in neighbor_cells:
-            candidate_cmc_ids.update(self.grid.cells[c]['cmcs'])
-            candidate_omc_ids.update(self.grid.cells[c]['outliers'])
+        for cell_idx in neighboring_cells_ids:
+            candidate_cmc_ids.update(self.grid.get_cmcs_in_cell(cell_index=cell_idx))
+            candidate_omc_ids.update(self.grid.get_outliers_in_cell(cell_index=cell_idx))
 
-        # TODO (Anton): step 3: merging & absorption
-        # NOTE: this is same as denstream but remember updating and upgrading the grid!
+        # TODO (Anton): merging & absorption
+        # NOTE: this is same as denstream but remember updating and the grid and always consider if it changes the graph structure!
 
         # - find nearest CMC among candidate_cmc_ids. If fits (radius check) -> insert & update grid
         # - if fails, find nearest OMC -> If fits, insert
         # - if OMC weight >= threshold -> promote to CMC
         # - If fits nowhere, create new OMC
         
-        # TODO: step 4: Graph Update
+        # TODO: Graph Update
         # - if a CMC was updated or newly promoted, call self.graph.update_node_edges()
         # - call self.graph.recompute_connected_components()
 
-        # TODO: step 5: prunning 
-        if True: #calculate Tp and prune every Tp steps
+        # TODO: prunning 
+        Tp = None 
+        if (Tp): #calculate Tp and prune every Tp steps
             self._periodic_cleanup(t, event_log)
 
         return (0, 0, " | ".join(event_log)) # Baseframework return signature
@@ -75,12 +83,7 @@ class CEDGM(OnlinePhase_StreamClusterer):
         """
         TODO (Anton): 
         - apply decay to all CMCs and Outliers.
-        - if OMC weight < threshold_sparse -> delete OMC and remove from grid
-        - if CMC weight < 0 (or lower bound) -> delete CMC, remove from grid, call self.graph.remove_node()
-        - clusters have life now as well not just the weight
-        
-        TODO :
-        - call self.graph.recompute_connected_components() to handle splits in the macro cluser
+        - consider graph changes when removing/deleting an mc
         """
         pass
 
@@ -89,5 +92,6 @@ class CEDGM(OnlinePhase_StreamClusterer):
         CEDGM is pure online! no offline here
         we just return the live graph state
         """
-        # Return a dictionary of {cmc_id: macro_cluster_label} directly from Paul's graph
+        # Return a dictionary of {cmc_id: macro_cluster_label} directly
+        # NOTE: it would be cool if later we can add visualization of the graph structure and how it changes over time :)
         return self.graph.macro_clusters

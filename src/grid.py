@@ -53,3 +53,9 @@ class GridSpace:
         if old_cell is not None:
             self.remove_mc_from_cell(mc_id, old_cell, is_core)
         self.add_mc_to_cell(mc_id, new_cell, is_core)
+
+    def get_cmcs_in_cell(self, cell_index: tuple) -> set:
+        return set(self.cells[cell_index]['cmcs'])
+
+    def get_outliers_in_cell(self, cell_index: tuple) -> set:
+        return set(self.cells[cell_index]['outliers'])
