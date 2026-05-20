@@ -1,10 +1,11 @@
 """
 Spatial Indexing Layer for CEDGM.
-Maps physical coordinates to discrete grid cells.
+Stores micro-cluster IDs by spatial cell for local candidate lookup.
 """
 
 import numpy as np
 from collections import defaultdict
+from itertools import product
 
 
 class GridSpace:
@@ -23,7 +24,8 @@ class GridSpace:
         TODO (Felix): Convert a multi-dimensional point into a discrete tuple index
         # take a look at how DStream handles this for multi dim
         """
-        pass
+        return tuple(np.floor(point / self.cell_size).astype(int))
+
 
     def get_neighboring_cells(self, cell_index: tuple) -> list[tuple]:
         """
@@ -43,3 +45,11 @@ class GridSpace:
         target_set = 'cmcs' if is_core else 'outliers'
         if mc_id in self.cells[cell_index][target_set]:
             self.cells[cell_index][target_set].remove(mc_id)
+
+    def move_mc_between_cells(self, mc_id: int, old_cell: tuple, new_cell: tuple, is_core: bool):
+        """
+        Move a micro-cluster ID from one cell to another
+        """
+        if old_cell is not None:
+            self.remove_mc_from_cell(mc_id, old_cell, is_core)
+        self.add_mc_to_cell(mc_id, new_cell, is_core)
