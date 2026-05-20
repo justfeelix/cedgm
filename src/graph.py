@@ -22,11 +22,15 @@ class AdjacencyGraph:
         # map CMC ID -> macro clister label
         self.macro_clusters = {}
 
+    #NOTE: these 3 updates should be supported as the paper says:
+    # new CMC added -> add node & compute edges
+    # CMC moved/updated -> possibly change edges
+    # CMC removed -> delete node and incident edges
+
     def update_node_edges(self, target_cmc, candidate_cmcs):
         """
         TODO (Paul): 
-        - calculate distance between target_cmc and all candidate_cmcs
-        - if distance < (self.intersection_multiplier * target_cmc.get_radius()), add an edge
+        - compare the target CMC against candidate CMCs in the local neighborhood and add an undirected edge when their regions overlap
         - here remember that edges are bidirectional!
         """
         pass
