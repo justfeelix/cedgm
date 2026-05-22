@@ -19,7 +19,7 @@ class MicroCluster():
         self.last_update = t_0 # # here we track the last time this MC was updated/decayed
         self.mc_type = mc_type
 
-        self.grid_cell = None # we need to track the grid cell this cluster currently belongs to
+        self.grid_cell : tuple = None # we need to track the grid cell this cluster currently belongs to
 
         # CEDGM Specific Attributes: (Center, Radius, Density, Life)
         self.density = 0.0  # (Den) Physical mass/weight of the cluster
