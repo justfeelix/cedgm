@@ -26,7 +26,9 @@ class CEDGM(OnlinePhase_StreamClusterer):
         self.grid = GridSpace(cell_size)
 
         #NOTE: the intersection multiplier is 1.5 in the paper, we can also make this a hyperparamtere as well when testing
-        self.graph = AdjacencyGraph(intersection_multiplier=1.5)
+        # The graph caches `intersection_multiplier * radius` once as its edge threshold,
+        # so it needs both values up front.
+        self.graph = AdjacencyGraph(radius=radius, intersection_multiplier=1.5)
 
         # Memory
         self.cmcs = {} # CMC_ID -> MicroCluster
@@ -46,6 +48,17 @@ class CEDGM(OnlinePhase_StreamClusterer):
         # 3. update graph for affected CMCs only
         # 4.  prune/decay 
         # 5. recompute macro-clusters
+
+        # GRAPH RESPONSIBILITY:
+        # The orchestrator owns the job of notifying the graph whenever the CMC
+        # population changes. The graph cannot detect drift on its own. Concretely:
+        #   - new CMC promoted from an outlier  -> self.graph.add_node(cmc_id)
+        #                                          then self.graph.update_node_edges(cmc, candidates)
+        #   - existing CMC absorbed a point (center may have moved)
+        #                                       -> self.graph.update_node_edges(cmc, candidates)
+        #   - CMC died via decay                -> self.graph.remove_node(cmc_id)
+        # The graph keeps self.graph.macro_clusters in sync internally, so there
+        # is no separate "recompute" call to make.
         
         # 1. Spatial Mapping
         cell_idx = self.grid.get_cell_index(x)
