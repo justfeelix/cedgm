@@ -29,11 +29,15 @@ class GridSpace:
 
     def get_neighboring_cells(self, cell_index: tuple) -> list[tuple]:
         """
-        TODO (Felix): Return a list of the target cell AND its immediate neighbors.
-        For 2D, this should return 5 or 9 cells (the center + 8 surrounding). check what the paper suggests
-        NOTE: this also needs to be adaptable if data is multi-dimensional!
+        Returns a list of the target cell AND its immediate neighbors.
+        Adapts dynamically to the dimensionality of the cell_index tuple (e.g., returns 9 cells for 2D, 27 cells for 3D).
         """
-        pass
+
+        # For every dimension in the tuple, get (idx-1, idx, idx+1)
+        ranges = [(idx - 1, idx, idx + 1) for idx in cell_index]
+        
+        # Compute the Cartesian product of all dimensional ranges
+        return list(product(*ranges))
     
     def add_mc_to_cell(self, mc_id: int, cell_index: tuple, is_core: bool):
         """Register a micro-cluster ID in a specific cell."""
