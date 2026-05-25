@@ -168,11 +168,16 @@ class CEDGM(OnlinePhase_StreamClusterer):
         if dist_cmc <= dist_omc and dist_cmc <= self.radius:
             # Fall 1: absorb into existing CMC
             assert nearest_cmc is not None
-            nearest_cmc.insert_sample(x, weight=1.0, life_boost=1.0)
-            self._handle_mc_cell_move(nearest_cmc, is_core=True)
-            affected_cmc = nearest_cmc
+            in_kernel = dist_cmc <= self.radius / 2.0
+            nearest_cmc.insert_sample(x, weight=1.0, life_boost=1.0,
+                                      move_center=not in_kernel)
             summary_id = nearest_cmc.mc_id
-            event_log.append(f"CMC {nearest_cmc.mc_id}: absorbed sample")
+            if in_kernel:
+                event_log.append(f"CMC {nearest_cmc.mc_id}: absorbed sample (kernel, center fixed)")
+            else:
+                self._handle_mc_cell_move(nearest_cmc, is_core=True)
+                affected_cmc = nearest_cmc  # triggers Step 3 graph update
+                event_log.append(f"CMC {nearest_cmc.mc_id}: absorbed sample (shell)")
 
         elif dist_omc <= self.radius:
             # Fall 2: absorb into existing OMC, check promotion
@@ -228,11 +233,11 @@ class CEDGM(OnlinePhase_StreamClusterer):
             mc.apply_decay(self.fade_factor, time_diff)
 
         # Phase 2: prune dead CMCs (Grid -> Graph -> Dict)
-        # Killing on density < min_threshold extends the paper (which only specifies life <= 0).
-        # Inspired by DenStream: removes degenerate CMCs that faded below the promotion threshold.
+        # Paper Step 2: a CMC dies purely when its (linearly aged) life runs out.
+        # density is an un-faded running count, so there is no separate mass cull.
         dead_cmc_ids = [
             mc_id for mc_id, mc in self.cmcs.items()
-            if mc.life <= 0 or mc.density < self.min_threshold
+            if mc.life <= 0
         ]
         for mc_id in dead_cmc_ids:
             mc = self.cmcs[mc_id]

@@ -38,7 +38,8 @@ class MicroCluster():
     def center(self) -> np.ndarray:
         return self.get_center()
     
-    def insert_sample(self, point: np.ndarray, weight: float = 1.0, life_boost: float = 1.0):
+    def insert_sample(self, point: np.ndarray, weight: float = 1.0,
+                      life_boost: float = 1.0, move_center: bool = True):
         """
         When a point is absorbed, density increases and life is replenished.
         """
@@ -46,27 +47,19 @@ class MicroCluster():
             self.CF1 = np.zeros_like(point)
             self.CF2 = np.zeros_like(point)
 
+        contribution = point if move_center else self.get_center()
+
         self.density += weight
-        self.life += life_boost  # replenish the survival timer or reset
-        
-        self.CF1 += point
-        self.CF2 += np.square(point)
+        self.life += life_boost  # replenish the survival timer
+
+        self.CF1 += contribution
+        self.CF2 += np.square(contribution)
 
     def apply_decay(self, decay_factor: float, time_diff: int):
         if time_diff <= 0:
             return
-        
-        fading_fraction = 2.0 ** (-decay_factor * time_diff)
 
-        # decay the spatial weight/mass and the energy timer
-        self.density *= fading_fraction
-        self.life = max(0.0, self.life - decay_factor * time_diff) # or apply exponential fade 
-
-        if self.CF1 is not None:
-            self.CF1 *= fading_fraction
-        if self.CF2 is not None:
-            self.CF2 *= fading_fraction
-
+        self.life = max(0.0, self.life - decay_factor * time_diff)
         self.last_update += time_diff
 
     def get_center(self) -> np.ndarray:
