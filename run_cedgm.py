@@ -50,7 +50,7 @@ def main():
                         help='Minimum allowable distance to CMC center (Radius)')
     parser.add_argument('--min_threshold', type=float, default=5.0,
                         help='Minimum density required to form a CMC (Thdensity)')
-    parser.add_argument('--decay', type=int, default=100,
+    parser.add_argument('--decay', type=int, default=1000,
                         help='Decay parameter: how many past samples matter (DC)')
     parser.add_argument('--cell_size', type=float, default=0.1,
                         help='Physical width of a grid cell (Resolution)')
