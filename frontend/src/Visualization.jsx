@@ -7,9 +7,9 @@ const IW = VB_W - M.left - M.right;
 const IH = VB_H - M.top - M.bottom;
 
 const COLORS = [
-  "#4f46e5","#10b981","#f59e0b","#ef4444","#8b5cf6",
-  "#06b6d4","#f97316","#84cc16","#ec4899","#14b8a6",
-  "#6366f1","#22c55e","#eab308","#f43f5e","#a78bfa",
+  "#007A4D","#005c39","#3a9e6f","#e37222","#a2ad00",
+  "#007c92","#9b0600","#f0c040","#6ab090","#c8102e",
+  "#4c9b6e","#e07b39","#00843D","#8b2fc9","#6a9b2f",
 ];
 
 function clusterColor(label) {
@@ -104,26 +104,26 @@ export default function Visualization({ data, loading, currentT, totalT, fixedBo
         viewBox={`0 0 ${VB_W} ${VB_H}`}
         onMouseLeave={() => setTooltip(null)}
       >
-        <rect x={M.left} y={M.top} width={IW} height={IH} fill="#f8fafc" />
+        <rect x={M.left} y={M.top} width={IW} height={IH} fill="#f4faf7" />
 
         {xTicks.map(t => (
           <line key={`gx${t}`} x1={scaleX(t)} y1={M.top} x2={scaleX(t)} y2={M.top + IH}
-            stroke="#e2e8f0" strokeWidth="1" />
+            stroke="#c5dfd0" strokeWidth="1" />
         ))}
         {yTicks.map(t => (
           <line key={`gy${t}`} x1={M.left} y1={scaleY(t)} x2={M.left + IW} y2={scaleY(t)}
-            stroke="#e2e8f0" strokeWidth="1" />
+            stroke="#c5dfd0" strokeWidth="1" />
         ))}
 
         <rect x={M.left} y={M.top} width={IW} height={IH}
-          fill="none" stroke="#cbd5e1" strokeWidth="1.5" />
+          fill="none" stroke="#8ecbac" strokeWidth="1.5" />
 
         {xTicks.map(t => (
           <g key={`xt${t}`}>
             <line x1={scaleX(t)} y1={M.top + IH} x2={scaleX(t)} y2={M.top + IH + 6}
-              stroke="#94a3b8" strokeWidth="1" />
+              stroke="#7aab93" strokeWidth="1" />
             <text x={scaleX(t)} y={M.top + IH + 19}
-              textAnchor="middle" fontSize="12" fill="#64748b" fontFamily="system-ui">
+              textAnchor="middle" fontSize="12" fill="#4a7a62" fontFamily="system-ui">
               {fmt(t)}
             </text>
           </g>
@@ -132,9 +132,9 @@ export default function Visualization({ data, loading, currentT, totalT, fixedBo
         {yTicks.map(t => (
           <g key={`yt${t}`}>
             <line x1={M.left - 6} y1={scaleY(t)} x2={M.left} y2={scaleY(t)}
-              stroke="#94a3b8" strokeWidth="1" />
+              stroke="#7aab93" strokeWidth="1" />
             <text x={M.left - 10} y={scaleY(t) + 4}
-              textAnchor="end" fontSize="12" fill="#64748b" fontFamily="system-ui">
+              textAnchor="end" fontSize="12" fill="#4a7a62" fontFamily="system-ui">
               {fmt(t)}
             </text>
           </g>
@@ -143,15 +143,15 @@ export default function Visualization({ data, loading, currentT, totalT, fixedBo
         {omcs.map(p => (
           <circle key={`o${p.mc_id}`}
             cx={p.cx} cy={p.cy} r={p.r}
-            fill="#94a3b8" fillOpacity={0.3}
-            stroke="#64748b" strokeWidth="1" strokeOpacity={0.5}
+            fill="#7aab93" fillOpacity={0.28}
+            stroke="#4a7a62" strokeWidth="1" strokeOpacity={0.5}
             style={{ cursor: "pointer" }}
             onMouseEnter={() => setTooltip(p)}
           />
         ))}
 
         {cmcs.map(p => {
-          const col = clusterColor(p.cluster_label) ?? "#4f46e5";
+          const col = clusterColor(p.cluster_label) ?? "#007A4D";
           return (
             <circle key={`c${p.mc_id}`}
               cx={p.cx} cy={p.cy} r={p.r}
@@ -171,7 +171,7 @@ export default function Visualization({ data, loading, currentT, totalT, fixedBo
           return (
             <g style={{ pointerEvents: "none" }}>
               <rect x={bx} y={by} width={bw} height={bh} rx={6}
-                fill="#0f172a" fillOpacity={0.88} />
+                fill="#003825" fillOpacity={0.92} />
               {[
                 ["ID",      tooltip.mc_id],
                 ["Cluster", tooltip.cluster_label],
@@ -180,8 +180,8 @@ export default function Visualization({ data, loading, currentT, totalT, fixedBo
                 ["KernelR", tooltip.kernel_radius.toFixed(3)],
               ].map(([k, v], i) => (
                 <text key={k} x={bx + 10} y={by + 16 + i * 15}
-                  fontSize="12" fill="#f1f5f9" fontFamily="system-ui">
-                  <tspan fill="#94a3b8">{k}: </tspan>{v}
+                  fontSize="12" fill="#eef6f1" fontFamily="system-ui">
+                  <tspan fill="#6ab090">{k}: </tspan>{v}
                 </text>
               ))}
             </g>
