@@ -58,6 +58,17 @@ def list_datasets():
     return {"datasets": list(DATASETS.keys())}
 
 
+@app.get("/bounds")
+def get_bounds(dataset: str):
+    data, _ = load_dataset(dataset)
+    col0, col1 = data[:, 0], data[:, 1]
+    x0, x1 = float(col0.min()), float(col0.max())
+    y0, y1 = float(col1.min()), float(col1.max())
+    xpad = (x1 - x0) * 0.07 or 1.0
+    ypad = (y1 - y0) * 0.07 or 1.0
+    return {"x0": x0 - xpad, "x1": x1 + xpad, "y0": y0 - ypad, "y1": y1 + ypad}
+
+
 @app.post("/run")
 def run(params: RunParams):
     data, ground_truth = load_dataset(params.dataset)
@@ -87,11 +98,18 @@ def run(params: RunParams):
             "is_core": mc_id in cedgm.cmcs,
         })
 
+    col0, col1 = data[:, 0], data[:, 1]
+    x0, x1 = float(col0.min()), float(col0.max())
+    y0, y1 = float(col1.min()), float(col1.max())
+    xpad = (x1 - x0) * 0.07 or 1.0
+    ypad = (y1 - y0) * 0.07 or 1.0
+
     return {
         "mc_states": mc_states,
         "events": events,
         "n_points": len(data),
         "ground_truth": ground_truth.tolist(),
+        "bounds": {"x0": x0 - xpad, "x1": x1 + xpad, "y0": y0 - ypad, "y1": y1 + ypad},
     }
 
 

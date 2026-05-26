@@ -66,6 +66,15 @@ export default function App() {
     setPlaying(true);
 
     try {
+      // Fetch full-dataset bounds before streaming so the grid is correctly
+      // sized from the first frame and never needs to resize mid-stream.
+      const boundsRes = await fetch(
+        `http://localhost:8000/bounds?dataset=${encodeURIComponent(params.dataset)}`,
+        { signal: ctrl.signal },
+      );
+      if (!boundsRes.ok) throw new Error((await boundsRes.json()).detail ?? boundsRes.statusText);
+      setStreamBounds(await boundsRes.json());
+
       const res = await fetch("http://localhost:8000/stream", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -77,7 +86,6 @@ export default function App() {
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buf = "";
-      let boundsLocked = false;
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -88,20 +96,6 @@ export default function App() {
           if (!part.startsWith("data: ")) continue;
           const frame = JSON.parse(part.slice(6));
           if (frame.done) { setStreamDone(true); setPlaying(false); break; }
-          // Lock bounds from the first frame so the grid never resizes
-          if (!boundsLocked && frame.mc_states.length > 0) {
-            const xs = frame.mc_states.map(m => m.center[0]);
-            const ys = frame.mc_states.map(m => m.center[1]);
-            let x0 = Math.min(...xs), x1 = Math.max(...xs);
-            let y0 = Math.min(...ys), y1 = Math.max(...ys);
-            const xSpan = Math.max(x1 - x0, Math.abs(x1 + x0) * 0.1 || 1);
-            const ySpan = Math.max(y1 - y0, Math.abs(y1 + y0) * 0.1 || 1);
-            setStreamBounds({
-              x0: x0 - xSpan * 0.07, x1: x1 + xSpan * 0.07,
-              y0: y0 - ySpan * 0.07, y1: y1 + ySpan * 0.07,
-            });
-            boundsLocked = true;
-          }
           setFrames(prev => [...prev, frame]);
         }
       }
@@ -183,7 +177,7 @@ export default function App() {
           loading={mode === "batch" ? batchLoading : false}
           currentT={mode === "stream" ? currentT : null}
           totalT={mode === "stream" ? totalT : null}
-          fixedBounds={mode === "stream" ? streamBounds : null}
+          fixedBounds={mode === "stream" ? streamBounds : (batchResult?.bounds ?? null)}
         />
       </div>
 
