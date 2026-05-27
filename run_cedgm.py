@@ -37,7 +37,7 @@ def main():
 
     # dataset / batching
     parser.add_argument('--dataset', type=str, default='complex9',
-                        help='Dataset name: complex9, rbf3, har, stream_densired')
+                        help='Dataset name: complex9, rbf3, har, stream_densired, spiral')
     parser.add_argument('--batch_size', type=int, default=500,
                         help='Number of instances per batch')
 
