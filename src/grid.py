@@ -21,8 +21,7 @@ class GridSpace:
 
     def get_cell_index(self, point: np.ndarray) -> tuple:
         """
-        TODO (Felix): Convert a multi-dimensional point into a discrete tuple index
-        # take a look at how DStream handles this for multi dim
+        Convert a multi-dimensional point into a discrete tuple index
         """
         return tuple(np.floor(point / self.cell_size).astype(int))
 
