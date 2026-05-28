@@ -19,6 +19,7 @@ sys.path.insert(0, '.')
 
 import argparse
 import itertools
+import os
 import numpy as np
 
 from run_cedgm import evaluate_params
@@ -172,9 +173,11 @@ def main():
                         help='Weight of the |n_clusters - true_k| penalty in the score')
     parser.add_argument('--seed', type=int, default=0,
                         help='RNG seed for random search (reproducibility)')
-    parser.add_argument('--plot', default='data/tuning_heatmap.png',
-                        help='Where to save the grid heatmap PNG (grid method only)')
+    parser.add_argument('--plot_dir', default='data/results/tuning',
+                        help='Directory for heatmap PNGs (grid → heatmap_coarse.png, '
+                             'refined → heatmap_refined.png)')
     args = parser.parse_args()
+    os.makedirs(args.plot_dir, exist_ok=True)
 
     print(f"Loading data '{args.dataset}'...")
     X, y = load_data(args.dataset)
@@ -197,7 +200,8 @@ def main():
 
         xs, ys, M = grid_matrix(results, 'radius', 'cell_size', metric='score')
         print_matrix(xs, ys, M, 'radius', 'cell_size', 'score')
-        save_heatmap(xs, ys, M, 'radius', 'cell_size', 'score', args.plot)
+        save_heatmap(xs, ys, M, 'radius', 'cell_size', 'score',
+                     os.path.join(args.plot_dir, 'heatmap_coarse.png'))
 
     elif args.method == 'random':
         param_space = {
@@ -227,8 +231,8 @@ def main():
 
         xs, ys, M = grid_matrix_marginalized(results, 'radius', 'cell_size', metric='score')
         print_matrix(xs, ys, M, 'radius', 'cell_size', 'best score (max over min_thr, decay)')
-        refined_path = args.plot.replace('.png', '_refined.png')
-        save_heatmap(xs, ys, M, 'radius', 'cell_size', 'best score', refined_path)
+        save_heatmap(xs, ys, M, 'radius', 'cell_size', 'best score',
+                     os.path.join(args.plot_dir, 'heatmap_refined.png'))
 
     print_top(results, n=5)
 
