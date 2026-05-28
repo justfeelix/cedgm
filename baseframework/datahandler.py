@@ -27,6 +27,11 @@ def read_file(dsname):
         y = np.load("./data/complex9_label.npy", allow_pickle=True)
         y = y.reshape(1, len(y))[0]
         return X, y
+    elif dsname == "complex9_upscaled":  # built by upscale_complex9.py to ~match paper's 9,199-pt DS1
+        X = np.load("./data/complex9_upscaled_data.npy", allow_pickle=True)
+        y = np.load("./data/complex9_upscaled_label.npy", allow_pickle=True)
+        y = y.reshape(1, len(y))[0]
+        return X, y
     else:
         raise FileNotFoundError
 
