@@ -100,6 +100,27 @@ def grid_matrix(results, x_param, y_param, metric="score"):
                 M[j, i] = r[metric]
     return xs, ys, M
 
+def grid_matrix_marginalized(results, x_param, y_param, metric="score", agg=max):
+    """Pivot N-D results to a 2-D matrix, aggregating across all other axes.
+
+    For the refined grid we vary 4 params; to project that onto a (radius,
+    cell_size) heatmap, each cell shows the *best* score across all sampled combinations
+    """
+    xs = sorted({r["params"][x_param] for r in results})
+    ys = sorted({r["params"][y_param] for r in results})
+    buckets = {}
+    for r in results:
+        key = (r["params"][x_param], r["params"][y_param])
+        buckets.setdefault(key, []).append(r[metric])
+    M = np.full((len(ys), len(xs)), np.nan)
+    for j, yv in enumerate(ys):
+        for i, xv in enumerate(xs):
+            vals = buckets.get((xv, yv))
+            if vals:
+                M[j, i] = agg(vals)
+    return xs, ys, M
+
+
 def print_matrix(xs, ys, M, x_param, y_param, metric):
     """Console heatmap — always available, no dependencies."""
     print(f"\n{metric} over {x_param} (cols) x {y_param} (rows):")
@@ -142,7 +163,9 @@ def main():
     parser = argparse.ArgumentParser(description="Hyperparameter search for CEDGM")
     parser.add_argument('--dataset', default='complex9',
                         help='Dataset name: complex9, rbf3, har, stream_densired, spiral')
-    parser.add_argument('--method', choices=['grid', 'random'], default='grid')
+    parser.add_argument('--method', choices=['grid', 'random', 'refined'], default='grid',
+                        help='grid: 2-D coarse mesh; random: 4-D random samples; '
+                             'refined: 4-D grid seeded from the random search top-5')
     parser.add_argument('--n_iter', type=int, default=40,
                         help='Number of configs to try (random search only)')
     parser.add_argument('--count_penalty_weight', type=float, default=0.5,
@@ -176,7 +199,7 @@ def main():
         print_matrix(xs, ys, M, 'radius', 'cell_size', 'score')
         save_heatmap(xs, ys, M, 'radius', 'cell_size', 'score', args.plot)
 
-    else:  # random
+    elif args.method == 'random':
         param_space = {
             'radius':        lambda rng: round(rng.uniform(0.03, 0.30), 4),
             'cell_size':     lambda rng: round(rng.uniform(0.05, 0.30), 4),
@@ -189,6 +212,23 @@ def main():
                                        seed=args.seed, constraint=constraint)
         results = run_search(X, y, candidates,
                              count_penalty_weight=args.count_penalty_weight)
+
+    else:  # refined
+        param_grid = {
+            'radius':        [0.08, 0.10, 0.12],
+            'cell_size':     [0.15, 0.20, 0.25],
+            'min_threshold': [20.0, 25.0, 30.0],
+            'decay':         [500, 700, 900],
+        }
+        candidates = list(grid_candidates(param_grid, constraint))
+        print(f"\nREFINED 4-D GRID on '{args.dataset}': {len(candidates)} configs\n")
+        results = run_search(X, y, candidates,
+                             count_penalty_weight=args.count_penalty_weight)
+
+        xs, ys, M = grid_matrix_marginalized(results, 'radius', 'cell_size', metric='score')
+        print_matrix(xs, ys, M, 'radius', 'cell_size', 'best score (max over min_thr, decay)')
+        refined_path = args.plot.replace('.png', '_refined.png')
+        save_heatmap(xs, ys, M, 'radius', 'cell_size', 'best score', refined_path)
 
     print_top(results, n=5)
 
