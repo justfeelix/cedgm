@@ -7,8 +7,8 @@ There are two ways to interact with the project:
 
 - **`run_cedgm.py`** — CLI entry point that streams a dataset through the
   algorithm in batches.
-- **`tuning.py`** — programmatic hyperparameter search (grid / random) over the
-  CEDGM parameters. See [TUNING.md](TUNING.md) for the approach and reasoning.
+- **`tuning.py`** — programmatic hyperparameter search (grid / random / refined)
+  over the CEDGM parameters.
 - **`playground.ipynb`** — notebook for experimentation and visualization.
 
 ## Requirements
@@ -70,3 +70,56 @@ uv run python run_cedgm.py --dataset complex9
 | `--decay` | Decay parameter (how many past samples matter) |
 | `--cell_size` | Physical width of a grid cell (resolution) |
 | `--eval_interval` | Run evaluation every N batches (0 = only at end of stream) |
+
+## Hyperparameter tuning
+
+`tuning.py` runs a programmatic search over CEDGM's four main parameters
+(`radius`, `cell_size`, `min_threshold`, `decay`).
+Each configuration is scored as **CMM minus a cluster-count penalty**, so good clusterings need
+both a high CMM and a cluster count close to the true number of classes.
+
+### Three search methods
+
+```bash
+# 1. Coarse grid — 2-D mesh over radius × cell_size (the other two params
+#    are held at their defaults).
+uv run python tuning.py --dataset complex9 --method grid
+
+# 2. Random search — 4-D uniform sampling over all parameters. Use --n_iter
+#    to set the budget and --seed for reproducibility.
+uv run python tuning.py --dataset complex9 --method random --n_iter 30 --seed 0
+
+# 3. Refined grid — 4-D grid whose ranges are taken from the random search's
+#    best region. Run this after random search to verify the best config
+uv run python tuning.py --dataset complex9 --method refined
+```
+
+### Outputs
+
+Heatmap PNGs land in `data/results/tuning/`:
+
+- `heatmap_coarse.png` — from `--method grid`
+- `heatmap_refined.png` — from `--method refined`
+
+Every run also prints the top-5 configurations to the console so you can pick
+the winner directly.
+
+### Useful flags
+
+| Flag | Description |
+| --- | --- |
+| `--dataset` | Dataset name (any of the five built-ins) |
+| `--method` | `grid`, `random`, or `refined` |
+| `--n_iter` | Configurations to try (random search only) |
+| `--seed` | RNG seed for random search (reproducibility) |
+| `--count_penalty_weight` | Weight of the cluster-count penalty in the score (default `0.5`) |
+| `--plot_dir` | Output directory for heatmap PNGs |
+
+### Suggested order
+
+`grid → random → refined`:
+
+1. **Coarse grid** to localise the good `radius` / `cell_size` region.
+2. **Random search** to also tune `min_threshold` and `decay`.
+3. **Refined grid** zoomed into the best region from step 2 to check
+   robustness and produce a second, finer heatmap.
